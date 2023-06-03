@@ -6,7 +6,8 @@ import * as THREE from 'three'
 import { useMemo, useRef, useState } from 'react'
 import { Line, useCursor, MeshDistortMaterial } from '@react-three/drei'
 import { useRouter } from 'next/navigation'
-
+import flagVertexShader from '@/templates/shaders/flag/vertexShader'
+import flagFragmentShader from '@/templates/shaders/flag/fragmentShader'
 export const Blob = ({ route = '/', ...props }) => {
   const router = useRouter()
   const [hovered, hover] = useState(false)
@@ -16,7 +17,8 @@ export const Blob = ({ route = '/', ...props }) => {
       onClick={() => router.push(route)}
       onPointerOver={() => hover(true)}
       onPointerOut={() => hover(false)}
-      {...props}>
+      {...props}
+    >
       <sphereGeometry args={[1, 64, 64]} />
       <MeshDistortMaterial roughness={0} color={hovered ? 'hotpink' : '#1fb2f5'} />
     </mesh>
@@ -65,4 +67,33 @@ export function Dog(props) {
   const { scene } = useGLTF('/dog.glb')
 
   return <primitive object={scene} {...props} />
+}
+
+export function FlagShader(props) {
+  const texture = new THREE.TextureLoader().load('/textures/flag-french.jpg')
+
+  const uniforms = useMemo(
+    () => ({
+      uTime: { value: 0 },
+      uFrequency: { value: new THREE.Vector2(5, 5) },
+      uTexture: { value: texture },
+    }),
+    [],
+  )
+
+  useFrame((state, delta) => {
+    console.log(uniforms)
+    uniforms.uTime.value += delta
+  })
+  return (
+    <mesh {...props}>
+      <planeGeometry args={[1, 1, 32, 32]} />
+      <shaderMaterial
+        vertexShader={flagVertexShader}
+        fragmentShader={flagFragmentShader}
+        uniforms={uniforms}
+        side={THREE.DoubleSide}
+      />
+    </mesh>
+  )
 }
